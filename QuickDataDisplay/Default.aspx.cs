@@ -6,6 +6,7 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using QuickDataDisplay.DAL;
 using QuickDataDisplay.Model;
+using System.Web.UI.WebControls;
 
 namespace QuickDataDisplay
 {
@@ -17,17 +18,17 @@ namespace QuickDataDisplay
 
         }
 
-        private DataTable _results = null;
-        protected DataTable Results
+        private List<DataTable> _tables = null;
+        protected List<DataTable> Tables
         {
             get
             {
-                if (_results == null)
+                if (_tables == null)
                 {
                     var dataLayer = new DataLayer();
-                    _results = dataLayer.ExecuteQueryFile();
+                    _tables = dataLayer.GetTables();
                 }
-                return _results;
+                return _tables;
             }
         }
     }

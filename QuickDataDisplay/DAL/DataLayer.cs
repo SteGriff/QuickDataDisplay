@@ -19,14 +19,14 @@ namespace QuickDataDisplay.DAL
             }
         }
 
-        public DataTable ExecuteQueryFile()
+        public DataTable ExecuteSql(string queryName, string commandText)
         {
             var results = new DataTable();
+            results.QueryName = queryName;
             
             using (SqlConnection connection = new SqlConnection(ConnectionString))
             {
                 connection.Open();
-                var commandText = GetCommandText();
                 using (SqlCommand command = new SqlCommand(commandText, connection))
                 {
                     using (var reader = command.ExecuteReader())
@@ -49,21 +49,39 @@ namespace QuickDataDisplay.DAL
             return results;
         }
 
-        private string GetCommandText()
+        public List<DataTable> GetTables()
         {
+            var results = new List<DataTable>();
+            var queryNamesAndContent = GetQueries();
+
+            foreach (var queryNameContent in queryNamesAndContent)
+            {
+                var thisTable = ExecuteSql(queryNameContent.Key, queryNameContent.Value);
+                results.Add(thisTable);
+            }
+
+            return results;
+        }
+
+        private Dictionary<string,string> GetQueries()
+        {
+            var commands = new Dictionary<string, string>();
+
             var request = HttpContext.Current.Request;
-            var sqlPath = Path.GetDirectoryName(request.PhysicalPath) + @"\sql\"; 
+            var sqlPath = Path.GetDirectoryName(request.PhysicalPath) + @"\sql\";
             var sqlFiles = Directory.EnumerateFiles(sqlPath, "*.sql");
-            var file = sqlFiles.FirstOrDefault();
-            if (file == null)
+            foreach (var sqlFile in sqlFiles)
             {
-                return "select 'No query files found in sql directory' as Error";
+                var thisContent = File.ReadAllText(sqlFile);
+                var tidyFileName = Path.GetFileNameWithoutExtension(sqlFile);
+                commands.Add(tidyFileName, thisContent);
             }
-            else
+            if (!sqlFiles.Any())
             {
-                return File.ReadAllText(file);
+                commands.Add("Error", "select 'No query files found in sql directory' as Error");
             }
- 
+
+            return commands;
         }
     }
 }

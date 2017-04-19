@@ -1,1 +1,1 @@
-select top 10 * from MyTable
+select 'Example' as HelloWorld
